@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VulnLab – Security Vulnerability Testing Environment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:       #0b0d12;
+  --surface:  #111520;
+  --surface2: #181d2c;
+  --border:   #242840;
+  --text:     #d6deed;
+  --dim:      #6c7393;
+  --accent:   #00e5ff;
+  --red:      #ff4c4c;
+  --orange:   #ff8c00;
+  --yellow:   #ffc107;
+  --green:    #39ff8a;
+  --purple:   #c084fc;
+  --mono: 'Share Tech Mono', monospace;
+  --sans: 'Exo 2', sans-serif;
+  --r: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 13px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,229,255,0.015) 2px, rgba(0,229,255,0.015) 4px);
+  pointer-events: none;
+  z-index: 100;
+}
+
+header {
+  padding: 12px 24px 10px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #0e1220, #0b0d16);
+  position: relative;
+  overflow: hidden;
+}
+
+header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scanH 3s ease-in-out infinite;
+}
+
+@keyframes scanH { 0%,100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+.header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+
+.logo-icon {
+  font-size: 1.2rem;
+  filter: drop-shadow(0 0 8px var(--accent));
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+  0%,100% { filter: drop-shadow(0 0 6px var(--accent)); }
+  50%      { filter: drop-shadow(0 0 18px var(--accent)); }
+}
+
+.logo {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  color: var(--accent);
+  letter-spacing: 4px;
+  text-shadow: 0 0 25px rgba(0,229,255,.5);
+}
+
+.subtitle {
+  font-family: var(--mono);
+  font-size: .68rem;
+  color: var(--yellow);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 2px;
+}
+.subtitle::before { content: '⚠'; color: var(--yellow); }
+
+.ticker-wrap {
+  margin-top: 8px;
+  overflow: hidden;
+  display: flex;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+}
+
+.ticker-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: .65rem;
+  padding: 2px 12px;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+}
+.ticker-section:last-child { border-right: none; }
+
+.tick-label {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: .6rem;
+  letter-spacing: 1px;
+}
+.tick-label.crit { background: rgba(255,76,76,.2); color: var(--red); border: 1px solid var(--red); }
+.tick-label.warn { background: rgba(255,193,7,.15); color: var(--yellow); border: 1px solid var(--yellow); }
+.tick-label.err  { background: rgba(192,132,252,.15); color: var(--purple); border: 1px solid var(--purple); }
+
+.tick-items { color: var(--dim); }
+.tick-items span { color: var(--text); margin: 0 2px; }
+.tick-items .sep { color: var(--border); }
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.tab {
+  font-family: var(--mono);
+  font-size: .65rem;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--dim);
+  letter-spacing: .5px;
+  transition: all .2s ease;
+  text-transform: uppercase;
+}
+.tab:hover { color: var(--text); border-color: var(--border); background: var(--surface2); transform: translateY(-1px); }
+.tab.active { background: var(--accent); color: var(--bg); border-color: var(--accent); box-shadow: 0 0 12px rgba(0,229,255,.3); font-weight: 700; }
+.tab.active:hover { transform: translateY(-1px); }
+
+.panels { flex: 1; padding: 18px 24px; }
+.panel { display: none; animation: fadeIn .3s ease; }
+.panel.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+.panel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 22px;
+  max-width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+.panel-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: var(--r) var(--r) 0 0;
+}
+.panel-card.crit::before    { background: linear-gradient(90deg, var(--red), transparent); }
+.panel-card.warn::before    { background: linear-gradient(90deg, var(--yellow), transparent); }
+.panel-card.info::before    { background: linear-gradient(90deg, var(--accent), transparent); }
+.panel-card.success::before { background: linear-gradient(90deg, var(--green), transparent); }
+.panel-card.purple::before  { background: linear-gradient(90deg, var(--purple), transparent); }
+
+.panel-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+
+.sev-badge {
+  font-family: var(--mono);
+  font-size: .62rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.sev-badge.critical { background: rgba(255,76,76,.2); color: var(--red); border: 1px solid rgba(255,76,76,.4); }
+.sev-badge.warning  { background: rgba(255,193,7,.15); color: var(--yellow); border: 1px solid rgba(255,193,7,.4); }
+.sev-badge.info     { background: rgba(0,229,255,.1); color: var(--accent); border: 1px solid rgba(0,229,255,.3); }
+.sev-badge.high     { background: rgba(255,140,0,.15); color: var(--orange); border: 1px solid rgba(255,140,0,.4); }
+.sev-badge.low      { background: rgba(57,255,138,.1); color: var(--green); border: 1px solid rgba(57,255,138,.3); }
+
+h2 { font-family: var(--mono); font-size: 1rem; color: var(--text); letter-spacing: 1px; }
+
+.desc {
+  font-size: .78rem;
+  color: var(--dim);
+  margin-bottom: 12px;
+  padding: 7px 12px;
+  background: var(--surface2);
+  border-left: 3px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  font-family: var(--mono);
+}
+
+.tag-row { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.tag { font-family: var(--mono); font-size: .62rem; padding: 2px 8px; border-radius: 4px; border: 1px solid; }
+.tag.label { border-color: var(--dim); color: var(--dim); }
+.tag.ddos  { border-color: var(--red); color: var(--red); background: rgba(255,76,76,.08); }
+.tag.scan  { border-color: var(--yellow); color: var(--yellow); background: rgba(255,193,7,.08); }
+.tag.web   { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,.08); }
+.tag.sql   { border-color: var(--orange); color: var(--orange); background: rgba(255,140,0,.08); }
+.tag.xss   { border-color: var(--purple); color: var(--purple); background: rgba(192,132,252,.08); }
+.tag.ssh   { border-color: var(--green); color: var(--green); background: rgba(57,255,138,.08); }
+
+.field-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.field-wrap { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 130px; }
+.field-label { font-family: var(--mono); font-size: .6rem; color: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+
+input[type="text"], input[type="number"], select {
+  font-family: var(--mono);
+  font-size: .78rem;
+  padding: 7px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  width: 100%;
+}
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 10px rgba(0,229,255,.18); }
+select option { background: var(--surface2); }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+button {
+  font-family: var(--mono);
+  font-size: .72rem;
+  padding: 7px 16px;
+  border-radius: 7px;
+  border: 1px solid;
+  cursor: pointer;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  transition: all .2s ease;
+  position: relative;
+  overflow: hidden;
+}
+button::after { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0); transition: background .2s; }
+button:hover::after { background: rgba(255,255,255,.05); }
+button:hover { transform: translateY(-1px) scale(1.02); }
+button:active { transform: translateY(0) scale(0.99); }
+
+.btn-simulate { background: rgba(0,229,255,.1); border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px rgba(0,229,255,.12); }
+.btn-simulate:hover { box-shadow: 0 0 18px rgba(0,229,255,.3); }
+.btn-simulate.running { animation: btnPulse .8s ease-in-out infinite; }
+
+@keyframes btnPulse {
+  0%,100% { box-shadow: 0 0 10px rgba(0,229,255,.12); }
+  50%      { box-shadow: 0 0 24px rgba(0,229,255,.55); }
+}
+
+.btn-clear { background: transparent; border-color: var(--border); color: var(--dim); }
+.btn-clear:hover { border-color: var(--red); color: var(--red); }
+
+/* Raw JSON toggle */
+.btn-raw { background: rgba(192,132,252,.1); border-color: var(--purple); color: var(--purple); font-size: .65rem; padding: 5px 12px; }
+.btn-raw:hover { box-shadow: 0 0 10px rgba(192,132,252,.3); }
+
+.result-box {
+  font-family: var(--mono);
+  font-size: .75rem;
+  padding: 12px 14px;
+  border-radius: 7px;
+  line-height: 1.7;
+  background: #080a0f;
+  border: 1px solid var(--border);
+  margin-top: 12px;
+  min-height: 50px;
+  max-height: 260px;
+  overflow-y: auto;
+  position: relative;
+  transition: border-color .3s;
+}
+.result-box.has-error { border-color: var(--red); }
+.result-box.has-success { border-color: var(--green); }
+
+.result-box::-webkit-scrollbar { width: 3px; }
+.result-box::-webkit-scrollbar-track { background: var(--surface2); }
+.result-box::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.result-line { display: block; margin-bottom: 1px; }
+.result-line .ts   { color: var(--dim); margin-right: 8px; }
+.result-line .ok   { color: var(--green); }
+.result-line .err  { color: var(--red); }
+.result-line .warn { color: var(--yellow); }
+.result-line .info { color: var(--accent); }
+.result-line .val  { color: var(--purple); }
+.result-line .key  { color: var(--orange); }
+
+/* Raw JSON view */
+.raw-json {
+  display: none;
+  font-family: var(--mono);
+  font-size: .72rem;
+  padding: 12px 14px;
+  border-radius: 7px;
+  background: #080a0f;
+  border: 1px solid var(--border);
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--dim);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.raw-json.show { display: block; }
+.raw-json .jk { color: var(--accent); }
+.raw-json .js { color: var(--green); }
+.raw-json .jn { color: var(--orange); }
+.raw-json .jb { color: var(--purple); }
+
+/* Severity indicator strip on result */
+.result-severity {
+  display: none;
+  font-family: var(--mono);
+  font-size: .62rem;
+  padding: 4px 10px;
+  margin-top: 8px;
+  border-radius: 5px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+.result-severity.show { display: block; }
+.result-severity.CRITICAL { background: rgba(255,76,76,.15); color: var(--red); border: 1px solid rgba(255,76,76,.3); }
+.result-severity.WARNING  { background: rgba(255,193,7,.12); color: var(--yellow); border: 1px solid rgba(255,193,7,.3); }
+.result-severity.ERROR    { background: rgba(192,132,252,.12); color: var(--purple); border: 1px solid rgba(192,132,252,.3); }
+.result-severity.INFO     { background: rgba(0,229,255,.08); color: var(--accent); border: 1px solid rgba(0,229,255,.2); }
+.result-severity.ALERT    { background: rgba(255,140,0,.12); color: var(--orange); border: 1px solid rgba(255,140,0,.3); }
+
+.cursor { display: inline-block; width: 7px; height: 12px; background: var(--accent); margin-left: 4px; vertical-align: middle; animation: blink .8s step-end infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.progress-wrap { margin-top: 10px; display: none; }
+.progress-wrap.show { display: block; }
+.progress-label { font-family: var(--mono); font-size: .62rem; color: var(--dim); margin-bottom: 4px; display: flex; justify-content: space-between; }
+.progress-bar-bg { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+.progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); border-radius: 3px; width: 0%; transition: width .3s ease; box-shadow: 0 0 6px rgba(0,229,255,.35); }
+
+footer {
+  font-family: var(--mono);
+  font-size: .65rem;
+  padding: 10px 24px;
+  text-align: center;
+  color: var(--dim);
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  letter-spacing: 1px;
+}
+footer .warn-icon { color: var(--yellow); margin: 0 6px; }
+footer span { color: var(--red); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <span class="logo-icon">🔒</span>
+    <span class="logo">VULNLAB</span>
+  </div>
+  <div class="subtitle">Security Vulnerability Testing Environment — Educational Use Only</div>
+  <div class="ticker-wrap">
+    <div class="ticker-section">
+      <span class="tick-label crit">CRITICAL</span>
+      <span class="tick-items">
+        <span>DDoS</span><span class="sep">·</span><span>DoS Hulk</span><span class="sep">·</span>
+        <span>GoldenEye</span><span class="sep">·</span><span>Slowloris</span><span class="sep">·</span>
+        <span>Slowhttp</span><span class="sep">·</span><span>Heartbleed</span>
+      </span>
+    </div>
+    <div class="ticker-section">
+      <span class="tick-label warn">WARNING</span>
+      <span class="tick-items">
+        <span>Portscan</span><span class="sep">·</span><span>SSH/FTP Patator</span><span class="sep">·</span>
+        <span>Web BruteForce</span><span class="sep">·</span><span>Zero-Day</span>
+      </span>
+    </div>
+    <div class="ticker-section">
+      <span class="tick-label err">ERROR</span>
+      <span class="tick-items">
+        <span>SQLi</span><span class="sep">·</span><span>XSS</span><span class="sep">·</span>
+        <span>IDOR</span><span class="sep">·</span><span>Infiltration</span>
+      </span>
+    </div>
+  </div>
+</header>
+
+<div class="tabs" id="tabBar">
+  <button class="tab active" data-tab="ddos">DDoS</button>
+  <button class="tab" data-tab="portscan">Portscan</button>
+  <button class="tab" data-tab="doshulk">DoS Hulk</button>
+  <button class="tab" data-tab="goldeneye">GoldenEye</button>
+  <button class="tab" data-tab="slowloris">Slowloris</button>
+  <button class="tab" data-tab="slowhttp">SlowHTTP</button>
+  <button class="tab" data-tab="ftppatator">FTP-Patator</button>
+  <button class="tab" data-tab="sshpatator">SSH-Patator</button>
+  <button class="tab" data-tab="sqlinject">SQL Inject</button>
+  <button class="tab" data-tab="webbrute">Web Brute</button>
+  <button class="tab" data-tab="xssreflect">XSS Reflect</button>
+  <button class="tab" data-tab="xssstored">XSS Stored</button>
+  <button class="tab" data-tab="heartbleed">Heartbleed</button>
+  <button class="tab" data-tab="botnetc2">Botnet C2</button>
+  <button class="tab" data-tab="infiltration">Infiltration</button>
+  <button class="tab" data-tab="zeroday">Zero-Day</button>
+  <button class="tab" data-tab="idor">IDOR</button>
+  <button class="tab" data-tab="pathtrav">Path Trav.</button>
+  <button class="tab" data-tab="benign">Benign</button>
+</div>
+
+<div class="panels">
+
+  <!-- DDoS -->
+  <div class="panel active" id="tab-ddos">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>DDOS ATTACK</h2></div>
+      <div class="desc">Distributed Denial of Service — SYN flood simulating high req/sec from multiple sources.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">DDoS</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="ddos-ip" value="192.168.1.105"/></div>
+        <div class="field-wrap" style="max-width:200px;"><span class="field-label">Req/sec</span><input type="number" id="ddos-rate" value="9000"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('ddos')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('ddos')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('ddos')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-ddos">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-ddos-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-ddos-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-ddos"></div>
+      <div class="result-box" id="result-ddos"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-ddos"></pre>
+    </div>
+  </div>
+
+  <!-- Portscan -->
+  <div class="panel" id="tab-portscan">
+    <div class="panel-card warn">
+      <div class="panel-header"><span class="sev-badge warning">Warning</span><h2>PORT SCAN</h2></div>
+      <div class="desc">TCP/UDP port enumeration scan across a target IP range to discover open services.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag scan">Portscan</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="scan-ip" value="10.0.0.55"/></div>
+        <div class="field-wrap" style="max-width:160px;"><span class="field-label">Ports Count</span><input type="number" id="scan-ports" value="1024"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('portscan')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('portscan')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('portscan')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-portscan">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-portscan-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-portscan-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-portscan"></div>
+      <div class="result-box" id="result-portscan"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-portscan"></pre>
+    </div>
+  </div>
+
+  <!-- DoS Hulk -->
+  <div class="panel" id="tab-doshulk">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>DOS HULK</h2></div>
+      <div class="desc">HTTP flood attack generating unique requests to bypass caching and overwhelm web servers.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">DoS</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="hulk-ip" value="10.0.0.88"/></div>
+        <div class="field-wrap" style="max-width:160px;"><span class="field-label">Req/sec</span><input type="number" id="hulk-rps" value="5000"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('doshulk')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('doshulk')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('doshulk')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-doshulk">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-doshulk-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-doshulk-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-doshulk"></div>
+      <div class="result-box" id="result-doshulk"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-doshulk"></pre>
+    </div>
+  </div>
+
+  <!-- GoldenEye -->
+  <div class="panel" id="tab-goldeneye">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>GOLDENEYE</h2></div>
+      <div class="desc">HTTP DoS using KeepAlive and cache-control manipulation to exhaust web server connections.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">DoS</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="ge-ip" value="10.0.0.99"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('goldeneye')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('goldeneye')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('goldeneye')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-goldeneye">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-goldeneye-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-goldeneye-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-goldeneye"></div>
+      <div class="result-box" id="result-goldeneye"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-goldeneye"></pre>
+    </div>
+  </div>
+
+  <!-- Slowloris -->
+  <div class="panel" id="tab-slowloris">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>SLOWLORIS</h2></div>
+      <div class="desc">Slow HTTP attack holding many partial connections open to exhaust server thread pool.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">Slowloris</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="sl-ip" value="10.0.0.71"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('slowloris')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('slowloris')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('slowloris')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-slowloris">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-slowloris-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-slowloris-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-slowloris"></div>
+      <div class="result-box" id="result-slowloris"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-slowloris"></pre>
+    </div>
+  </div>
+
+  <!-- SlowHTTP -->
+  <div class="panel" id="tab-slowhttp">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>SLOW HTTP</h2></div>
+      <div class="desc">Slow POST attack sending HTTP body data at a very low rate to hold connections open.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">SlowHTTP</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="sh-ip" value="10.0.0.62"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('slowhttp')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('slowhttp')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('slowhttp')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-slowhttp">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-slowhttp-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-slowhttp-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-slowhttp"></div>
+      <div class="result-box" id="result-slowhttp"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-slowhttp"></pre>
+    </div>
+  </div>
+
+  <!-- FTP Patator -->
+  <div class="panel" id="tab-ftppatator">
+    <div class="panel-card warn">
+      <div class="panel-header"><span class="sev-badge warning">Warning</span><h2>FTP-PATATOR</h2></div>
+      <div class="desc">FTP credential brute-force. Hint: try username=<b style="color:var(--yellow)">ftpuser</b> password=<b style="color:var(--green)">ftppass</b> to crack.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ssh">FTP-Brute</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Username</span><input type="text" id="ftp-user" value="ftpuser"/></div>
+        <div class="field-wrap"><span class="field-label">Password</span><input type="text" id="ftp-pass" value="test"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('ftppatator')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('ftppatator')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('ftppatator')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-ftppatator">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-ftppatator-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-ftppatator-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-ftppatator"></div>
+      <div class="result-box" id="result-ftppatator"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-ftppatator"></pre>
+    </div>
+  </div>
+
+  <!-- SSH Patator -->
+  <div class="panel" id="tab-sshpatator">
+    <div class="panel-card warn">
+      <div class="panel-header"><span class="sev-badge warning">Warning</span><h2>SSH-PATATOR</h2></div>
+      <div class="desc">SSH credential brute-force. Try <b style="color:var(--green)">root/toor</b> or <b style="color:var(--green)">admin/secret123</b> to succeed.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ssh">SSH-Brute</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="ssh-ip" value="10.0.0.44"/></div>
+        <div class="field-wrap"><span class="field-label">Username</span><input type="text" id="ssh-user" value="root"/></div>
+        <div class="field-wrap"><span class="field-label">Password</span><input type="text" id="ssh-pass" value="test"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('sshpatator')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('sshpatator')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('sshpatator')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-sshpatator">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-sshpatator-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-sshpatator-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-sshpatator"></div>
+      <div class="result-box" id="result-sshpatator"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-sshpatator"></pre>
+    </div>
+  </div>
+
+  <!-- SQL Inject -->
+  <div class="panel" id="tab-sqlinject">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>SQL INJECTION</h2></div>
+      <div class="desc">Simulated SQL injection. Try username=<b style="color:var(--yellow)">' OR 1=1 --</b> to bypass auth and leak all rows.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag sql">SQLi</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Username</span><input type="text" id="sql-user" value="admin"/></div>
+        <div class="field-wrap"><span class="field-label">Password</span><input type="text" id="sql-pass" value="wrong"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('sqlinject')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('sqlinject')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('sqlinject')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-sqlinject">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-sqlinject-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-sqlinject-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-sqlinject"></div>
+      <div class="result-box" id="result-sqlinject"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-sqlinject"></pre>
+    </div>
+  </div>
+
+  <!-- Web Brute -->
+  <div class="panel" id="tab-webbrute">
+    <div class="panel-card warn">
+      <div class="panel-header"><span class="sev-badge warning">Warning</span><h2>WEB BRUTEFORCE</h2></div>
+      <div class="desc">HTTP login form credential stuffing. Try <b style="color:var(--green)">admin/secret123</b> or <b style="color:var(--green)">alice/pass456</b>.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag web">Web-Brute</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Username</span><input type="text" id="wb-user" value="admin"/></div>
+        <div class="field-wrap"><span class="field-label">Password</span><input type="text" id="wb-pass" value="wrongpass"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('webbrute')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('webbrute')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('webbrute')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-webbrute">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-webbrute-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-webbrute-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-webbrute"></div>
+      <div class="result-box" id="result-webbrute"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-webbrute"></pre>
+    </div>
+  </div>
+
+  <!-- XSS Reflect -->
+  <div class="panel" id="tab-xssreflect">
+    <div class="panel-card purple">
+      <div class="panel-header"><span class="sev-badge high">High</span><h2>XSS REFLECTED</h2></div>
+      <div class="desc">Opens the backend's live reflected XSS endpoint in a new tab with the payload echoed unsanitized.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag xss">XSS</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Payload</span><input type="text" id="xssr-payload" value="&lt;img src=x onerror=alert('XSS')&gt;"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('xssreflect')">⚡ Simulate</button>
+        <button class="btn-clear" onclick="clearResult('xssreflect')">Clear</button>
+      </div>
+      <div class="result-severity" id="sev-xssreflect"></div>
+      <div class="result-box" id="result-xssreflect"><span class="cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- XSS Stored -->
+  <div class="panel" id="tab-xssstored">
+    <div class="panel-card purple">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>XSS STORED</h2></div>
+      <div class="desc">Persistent XSS — stores a script payload in the server comment store.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag xss">XSS</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Comment / Payload</span><input type="text" id="xsss-comment" value="&lt;script&gt;alert('stored XSS')&lt;/script&gt;"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('xssstored')">⚡ Simulate</button>
+        <button class="btn-simulate" onclick="fetchStoredComments()" style="background:rgba(57,255,138,.1);border-color:var(--green);color:var(--green);">📋 View Stored</button>
+        <button class="btn-raw" onclick="toggleRaw('xssstored')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('xssstored')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-xssstored">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-xssstored-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-xssstored-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-xssstored"></div>
+      <div class="result-box" id="result-xssstored"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-xssstored"></pre>
+    </div>
+  </div>
+
+  <!-- Heartbleed -->
+  <div class="panel" id="tab-heartbleed">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>HEARTBLEED</h2></div>
+      <div class="desc">CVE-2014-0160 — OpenSSL buffer over-read leaking up to 64KB of server memory per request.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">CVE-2014-0160</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="hb-ip" value="192.168.1.200"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('heartbleed')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('heartbleed')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('heartbleed')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-heartbleed">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-heartbleed-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-heartbleed-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-heartbleed"></div>
+      <div class="result-box" id="result-heartbleed"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-heartbleed"></pre>
+    </div>
+  </div>
+
+  <!-- Botnet C2 -->
+  <div class="panel" id="tab-botnetc2">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>BOTNET C2</h2></div>
+      <div class="desc">Simulated Command & Control beacon traffic — periodic heartbeat packets from bot to C2 server.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">Botnet</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="c2-ip" value="10.0.0.77"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('botnetc2')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('botnetc2')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('botnetc2')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-botnetc2">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-botnetc2-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-botnetc2-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-botnetc2"></div>
+      <div class="result-box" id="result-botnetc2"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-botnetc2"></pre>
+    </div>
+  </div>
+
+  <!-- Infiltration -->
+  <div class="panel" id="tab-infiltration">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>INFILTRATION</h2></div>
+      <div class="desc">Lateral movement simulation — credential reuse across internal hosts after initial compromise.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">Infiltration</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Source IP</span><input type="text" id="inf-ip" value="10.0.1.15"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('infiltration')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('infiltration')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('infiltration')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-infiltration">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-infiltration-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-infiltration-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-infiltration"></div>
+      <div class="result-box" id="result-infiltration"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-infiltration"></pre>
+    </div>
+  </div>
+
+  <!-- Zero-Day -->
+  <div class="panel" id="tab-zeroday">
+    <div class="panel-card crit">
+      <div class="panel-header"><span class="sev-badge critical">Critical</span><h2>ZERO-DAY</h2></div>
+      <div class="desc">Simulated zero-day exploit delivery — crafted payload targeting unknown vulnerability.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ddos">0day</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">Payload</span><input type="text" id="zd-payload" value="\x41\x41\x41\x41\x90\x90\xeb\x06"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('zeroday')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('zeroday')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('zeroday')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-zeroday">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-zeroday-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-zeroday-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-zeroday"></div>
+      <div class="result-box" id="result-zeroday"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-zeroday"></pre>
+    </div>
+  </div>
+
+  <!-- IDOR -->
+  <div class="panel" id="tab-idor">
+    <div class="panel-card purple">
+      <div class="panel-header"><span class="sev-badge high">High</span><h2>IDOR</h2></div>
+      <div class="desc">Insecure Direct Object Reference — enumerates user IDs (1, 2, 3) to access unauthorized records.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag xss">IDOR</span></div>
+      <div class="field-group">
+        <div class="field-wrap" style="max-width:160px;"><span class="field-label">User ID</span><input type="number" id="idor-id" value="1" min="1" max="10"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('idor')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('idor')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('idor')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-idor">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-idor-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-idor-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-idor"></div>
+      <div class="result-box" id="result-idor"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-idor"></pre>
+    </div>
+  </div>
+
+  <!-- Path Traversal -->
+  <div class="panel" id="tab-pathtrav">
+    <div class="panel-card purple">
+      <div class="panel-header"><span class="sev-badge high">High</span><h2>PATH TRAVERSAL</h2></div>
+      <div class="desc">Directory traversal attack using ../ sequences to read files outside the web root.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag xss">PathTrav</span></div>
+      <div class="field-group">
+        <div class="field-wrap"><span class="field-label">File Path</span><input type="text" id="pt-file" value="../../../../etc/passwd"/></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('pathtrav')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('pathtrav')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('pathtrav')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-pathtrav">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-pathtrav-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-pathtrav-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-pathtrav"></div>
+      <div class="result-box" id="result-pathtrav"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-pathtrav"></pre>
+    </div>
+  </div>
+
+  <!-- Benign -->
+  <div class="panel" id="tab-benign">
+    <div class="panel-card success">
+      <div class="panel-header"><span class="sev-badge low">Benign</span><h2>BENIGN TRAFFIC</h2></div>
+      <div class="desc">Normal HTTP/HTTPS traffic simulation — baseline traffic for IDS/IPS training and calibration.</div>
+      <div class="tag-row"><span class="tag label">Label</span><span class="tag ssh">Benign</span></div>
+      <div class="btn-row">
+        <button class="btn-simulate" onclick="simulate('benign')">⚡ Simulate</button>
+        <button class="btn-raw" onclick="toggleRaw('benign')">{ } Raw</button>
+        <button class="btn-clear" onclick="clearResult('benign')">Clear</button>
+      </div>
+      <div class="progress-wrap" id="prog-benign">
+        <div class="progress-label"><span>Sending to API...</span><span id="prog-benign-pct">0%</span></div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-benign-fill"></div></div>
+      </div>
+      <div class="result-severity" id="sev-benign"></div>
+      <div class="result-box" id="result-benign"><span class="cursor"></span></div>
+      <pre class="raw-json" id="raw-benign"></pre>
+    </div>
+  </div>
+
+</div><!-- end .panels -->
+
+<footer>
+  <span class="warn-icon">⚠</span>
+  FOR EDUCATIONAL / CTF / PENTEST LAB USE ONLY &nbsp;·&nbsp;
+  <span>DO NOT DEPLOY ON PUBLIC SERVER</span>
+  <span class="warn-icon">⚠</span>
+</footer>
+
+<script>
+// ── Tab switching ──
+document.getElementById('tabBar').addEventListener('click', e => {
+  const tab = e.target.closest('.tab');
+  if (!tab) return;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('tab-' + tab.dataset.tab)?.classList.add('active');
+});
+
+// ── Helpers ──
+function g(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+function ts()  { return new Date().toTimeString().slice(0,8); }
+
+function appendLine(box, cls, text) {
+  const cursor = box.querySelector('.cursor');
+  const line = document.createElement('span');
+  line.className = 'result-line';
+  line.innerHTML = `<span class="ts">[${ts()}]</span><span class="${cls}">${escHtml(text)}</span>`;
+  box.insertBefore(line, cursor);
+  box.scrollTop = box.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setProgress(id, pct) {
+  const fill = document.getElementById('prog-' + id + '-fill');
+  const pctEl = document.getElementById('prog-' + id + '-pct');
+  if (fill)  fill.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function showSeverity(id, severity) {
+  const el = document.getElementById('sev-' + id);
+  if (!el) return;
+  el.className = 'result-severity show ' + severity;
+  el.textContent = '● Severity: ' + severity;
+}
+
+// ── Raw JSON syntax highlight ──
+function syntaxHL(json) {
+  return json
+    .replace(/("[\w\s\-]+")\s*:/g, '<span class="jk">$1</span>:')
+    .replace(/:\s*(".*?")/g, ': <span class="js">$1</span>')
+    .replace(/:\s*(\d+\.?\d*)/g, ': <span class="jn">$1</span>')
+    .replace(/:\s*(true|false|null)/g, ': <span class="jb">$1</span>');
+}
+
+function toggleRaw(id) {
+  const el = document.getElementById('raw-' + id);
+  if (!el) return;
+  el.classList.toggle('show');
+}
+
+// ── Pretty-print response fields into the log box ──
+function renderResponse(id, data) {
+  const box = document.getElementById('result-' + id);
+  const raw = document.getElementById('raw-' + id);
+
+  // severity strip
+  if (data.severity) showSeverity(id, data.severity);
+
+  // log line
+  if (data.log) {
+    const sev = (data.severity || '').toUpperCase();
+    const cls = sev === 'CRITICAL' ? 'err' : sev === 'WARNING' ? 'warn' : sev === 'INFO' ? 'ok' : 'err';
+    appendLine(box, cls, data.log);
+  }
+
+  // extra fields (skip meta keys)
+  const skip = new Set(['label','severity','timestamp','log']);
+  for (const [k, v] of Object.entries(data)) {
+    if (skip.has(k)) continue;
+    const val = Array.isArray(v) ? v.join('  |  ') : (typeof v === 'object' ? JSON.stringify(v) : v);
+    appendLine(box, 'val', `  ${k}: ${val}`);
+  }
+
+  // raw JSON pane
+  if (raw) {
+    raw.innerHTML = syntaxHL(JSON.stringify(data, null, 2));
+  }
+
+  // color the border
+  const sev = (data.severity || '').toUpperCase();
+  if (sev === 'CRITICAL' || sev === 'ERROR' || sev === 'ALERT') {
+    box.classList.add('has-error');
+  } else if (sev === 'INFO') {
+    box.classList.add('has-success');
+  }
+}
+
+// ── API call dispatcher ──
+async function simulate(id) {
+  const box  = document.getElementById('result-' + id);
+  const prog = document.getElementById('prog-' + id);
+  const btn  = box?.closest('.panel-card')?.querySelector('.btn-simulate');
+
+  clearResult(id);
+  prog?.classList.add('show');
+  setProgress(id, 30);
+  if (btn) { btn.classList.add('running'); btn.textContent = '⏳ Running...'; }
+
+  try {
+    let url, options;
+
+    switch (id) {
+      // ── POST endpoints ──
+      case 'ddos':
+        url = '/vuln/ddos';
+        options = body({ rps: g('ddos-rate'), sourceIp: g('ddos-ip') });
+        break;
+      case 'portscan':
+        url = '/vuln/portscan';
+        options = body({ sourceIp: g('scan-ip'), ports: parseInt(g('scan-ports')) });
+        break;
+      case 'doshulk':
+        url = '/vuln/dos-hulk';
+        options = body({ sourceIp: g('hulk-ip'), rps: parseInt(g('hulk-rps')) });
+        break;
+      case 'goldeneye':
+        url = '/vuln/dos-goldeneye';
+        options = body({ sourceIp: g('ge-ip') });
+        break;
+      case 'slowloris':
+        url = '/vuln/dos-slowloris';
+        options = body({ sourceIp: g('sl-ip') });
+        break;
+      case 'slowhttp':
+        url = '/vuln/dos-slowhttptest';
+        options = body({ sourceIp: g('sh-ip') });
+        break;
+      case 'ftppatator':
+        url = '/vuln/ftp-patator';
+        options = body({ username: g('ftp-user'), password: g('ftp-pass') });
+        break;
+      case 'sshpatator':
+        url = '/vuln/ssh-patator';
+        options = body({ username: g('ssh-user'), password: g('ssh-pass'), sourceIp: g('ssh-ip') });
+        break;
+      case 'sqlinject':
+        url = '/vuln/sqli';
+        options = body({ username: g('sql-user'), password: g('sql-pass') });
+        break;
+      case 'webbrute':
+        url = '/vuln/web-bruteforce';
+        options = body({ username: g('wb-user'), password: g('wb-pass') });
+        break;
+      case 'xssstored':
+        url = '/vuln/xss-stored';
+        options = body({ comment: g('xsss-comment') });
+        break;
+      case 'heartbleed':
+        url = '/vuln/heartbleed';
+        options = body({ sourceIp: g('hb-ip') });
+        break;
+      case 'botnetc2':
+        url = '/vuln/botnet';
+        options = body({ sourceIp: g('c2-ip') });
+        break;
+      case 'infiltration':
+        url = '/vuln/infiltration';
+        options = body({ sourceIp: g('inf-ip') });
+        break;
+      case 'zeroday':
+        url = '/vuln/zeroday';
+        options = body({ payload: g('zd-payload') });
+        break;
+      case 'benign':
+        url = '/vuln/normal';
+        options = body({});
+        break;
+
+      // ── GET endpoints ──
+      case 'xssreflect': {
+        const payload = g('xssr-payload');
+        const fullUrl = `/vuln/xss-reflected?input=${encodeURIComponent(payload)}`;
+        setProgress(id, 70);
+        appendLine(box, 'info', `Opening reflected XSS endpoint in new tab...`);
+        appendLine(box, 'warn', `Payload: ${payload}`);
+        appendLine(box, 'err',  `URL: ${fullUrl}`);
+        appendLine(box, 'ok',   `Input echoed unsanitized — VULNERABLE`);
+        window.open(fullUrl, '_blank');
+        setProgress(id, 100);
+        showSeverity(id, 'ERROR');
+        box.classList.add('has-error');
+        if (btn) { btn.classList.remove('running'); btn.textContent = '⚡ Simulate'; }
+        prog?.classList.remove('show');
+        return;
+      }
+      case 'idor': {
+        const idNum = parseInt(g('idor-id')) || 1;
+        url = `/vuln/idor?id=${idNum}`;
+        setProgress(id, 50);
+        const resp = await fetch(url);
+        setProgress(id, 90);
+        const data = await resp.json();
+        if (resp.ok) {
+          renderResponse(id, data);
+        } else {
+          appendLine(box, 'warn', `User ID ${idNum}: ${data.error || 'Not found'}`);
+          box.classList.add('has-error');
+        }
+        done(id, btn, prog);
+        return;
+      }
+      case 'pathtrav': {
+        const file = g('pt-file');
+        url = `/vuln/path-traversal?file=${encodeURIComponent(file)}`;
+        setProgress(id, 50);
+        const resp = await fetch(url);
+        setProgress(id, 90);
+        const data = await resp.json();
+        renderResponse(id, data);
+        done(id, btn, prog);
+        return;
+      }
+      default:
+        appendLine(box, 'err', `Unknown simulation: ${id}`);
+        done(id, btn, prog);
+        return;
+    }
+
+    setProgress(id, 60);
+    const resp = await fetch(url, options);
+    setProgress(id, 90);
+    const data = await resp.json();
+    renderResponse(id, data);
+
+  } catch (err) {
+    appendLine(document.getElementById('result-' + id), 'err',
+      `Fetch error: ${err.message} — is the Express server running on port 3000?`);
+    document.getElementById('result-' + id)?.classList.add('has-error');
+  }
+
+  done(id, btn, prog);
+}
+
+function body(payload) {
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  };
+}
+
+function done(id, btn, prog) {
+  setProgress(id, 100);
+  setTimeout(() => prog?.classList.remove('show'), 1200);
+  if (btn) { btn.classList.remove('running'); btn.textContent = '⚡ Simulate'; }
+}
+
+// ── Fetch & display stored XSS comments ──
+async function fetchStoredComments() {
+  const box = document.getElementById('result-xssstored');
+  try {
+    const resp = await fetch('/vuln/xss-stored');
+    const data = await resp.json();
+    appendLine(box, 'info', `Stored comments (${data.comments.length}):`);
+    data.comments.forEach((c, i) => appendLine(box, 'val', `  [${i+1}] ${c}`));
+  } catch (e) {
+    appendLine(box, 'err', `Could not fetch stored comments: ${e.message}`);
+  }
+}
+
+// ── Clear ──
+function clearResult(id) {
+  const box = document.getElementById('result-' + id);
+  if (box) {
+    box.innerHTML = '<span class="cursor"></span>';
+    box.classList.remove('has-error','has-success');
+  }
+  const sev = document.getElementById('sev-' + id);
+  if (sev) { sev.className = 'result-severity'; sev.textContent = ''; }
+  const raw = document.getElementById('raw-' + id);
+  if (raw) { raw.innerHTML = ''; raw.classList.remove('show'); }
+  setProgress(id, 0);
+  const prog = document.getElementById('prog-' + id);
+  if (prog) prog.classList.remove('show');
+}
+</script>
+</body>
+</html>
